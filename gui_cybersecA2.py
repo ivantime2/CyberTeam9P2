@@ -2,7 +2,6 @@
 from tkinter import *
 import tkinter as tk
 from tkinter import filedialog
-from PIL import ImageTk, Image
 import imghdr
 import bpcs
 import os
@@ -31,12 +30,13 @@ def ExtractPayload(file, option, alpha, message=None):
         bpcs.decode(file, "decoded_message.txt", alpha)
         with open('decoded_message.txt') as file:
             data = str(file.read())
-            # print(data)
+            print(data)
         output.insert(tk.END, data)
     elif option == 2 and message is not None:
         bpcs.encode(file, message, "encoded_file.png", alpha)
     else:
         print("Invalid Option")
+
 
 def ConfirmAction():
     fileext = ["jpg", "jpeg", "png"]
@@ -46,20 +46,16 @@ def ConfirmAction():
     if payloadname[-1:-3:1] == "txt":
         lab = tk.Label(window, width=30, text=payloadname.split("/")[-1])
         lab.grid(row=3, column=1)
-    elif imghdr.what(covername) in fileext:
+    elif imghdr.what(payloadname) in fileext:
         canvas = Canvas(window, width=300, height=300)
         canvas.grid(row=3, column=1)
-        img = PhotoImage(file=covername)
+        img = PhotoImage(file=payloadname)
         canvas.create_image(10, 10, anchor=NW, image=img)
     else:
         lab = tk.Label(window, width=15, text="Incorrect file format")
         lab.grid(row=3, column=1)
     ExtractPayload(covername, 2, 0.45, message=payloadname)
     ExtractPayload("encoded_file.png", 1, 0.45)
-    canvas2 = Canvas(window, width=300, height=300)
-    canvas2.grid(row=3, column=3)
-    img2 = ImageTk.PhotoImage(Image.open("encoded_file.png"))
-    canvas2.create_image(10, 10, anchor=NW, image=img2)
     window.mainloop()
 
 

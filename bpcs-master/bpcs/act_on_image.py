@@ -9,7 +9,7 @@ def load_image(infile, as_rgb):
     return Image.open(infile).convert(get_im_mode(as_rgb))
 
 def write_image(outfile, im):
-    im.save(outfile)
+    im.save(outfile, outfile.split('.')[-1])
 
 def image_to_array(im):
     return np.array(im)
