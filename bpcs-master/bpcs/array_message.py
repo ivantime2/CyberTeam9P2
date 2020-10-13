@@ -5,6 +5,7 @@ from functools import reduce
 from .logger import log
 from .bpcs_steg import conjugate, arr_bpcs_complexity, max_bpcs_complexity, checkerboard
 
+
 def get_conj_grid_prefix(dims, alpha):
     """
     dims is list specifying grid shape
@@ -13,12 +14,14 @@ def get_conj_grid_prefix(dims, alpha):
     returns a list of trash bits to prefix each conjugation map
         to ensure that the resulting grid will have complexity >= alpha
     """
-    n = reduce(lambda x,y: x*y, dims, 1)
+    #def function1(x,y):x*y,dims->y,1->x)
+    n = reduce(lambda x, y: x*y, dims, 1)
     checkered = checkerboard(*dims).reshape(-1).tolist()
     nprefix = int(ceil(alpha*n))
     prefix = checkered[:nprefix]
     assert len(prefix) == nprefix
     return prefix
+
 
 def get_next_message_grid_sized(arr, dims, min_alpha=None):
     """
@@ -28,7 +31,7 @@ def get_next_message_grid_sized(arr, dims, min_alpha=None):
     """
     if arr.size == 0:
         raise Exception("cannot get a grid from empty array")
-    n = reduce(lambda x,y: x*y, dims, 1)
+    n = reduce(lambda x, y: x*y, dims, 1)
     arr = arr.reshape(-1).tolist()
     if min_alpha:
         prefix = get_conj_grid_prefix(dims, min_alpha)
@@ -39,8 +42,10 @@ def get_next_message_grid_sized(arr, dims, min_alpha=None):
     cur_arr, arr = np.array(arr[:n]), np.array(arr[n:])
     cur_arr.resize(dims)
     if min_alpha:
-        assert arr_bpcs_complexity(cur_arr) >= min_alpha, '{0} < {1}'.format(arr_bpcs_complexity(cur_arr), min_alpha)
+        assert arr_bpcs_complexity(cur_arr) >= min_alpha, '{0} < {1}'.format(
+            arr_bpcs_complexity(cur_arr), min_alpha)
     return cur_arr, arr
+
 
 def list_to_grids(arr, dims):
     """
@@ -59,6 +64,7 @@ def list_to_grids(arr, dims):
     assert len(arr) % area == 0
     return np.resize(arr, [ngrids, dims[0], dims[1]])
 
+
 def str_to_grids(message, grid_size):
     """
     message is str
@@ -76,6 +82,7 @@ def str_to_grids(message, grid_size):
     # return bits_list
     return list_to_grids(bits_list, grid_size)
 
+
 def read_message_grids(messagefile, grid_size):
     """
     reads messagefile as bits and returns as list of grids
@@ -83,6 +90,7 @@ def read_message_grids(messagefile, grid_size):
     """
     with open(messagefile, 'r') as f:
         return str_to_grids(f.read(), grid_size)
+
 
 def grids_to_list(grids):
     """
@@ -92,6 +100,7 @@ def grids_to_list(grids):
     """
     grids = [np.array(grid).reshape(-1) for grid in grids]
     return np.hstack(grids).flatten().tolist()
+
 
 def grids_to_str(grids):
     """
@@ -109,9 +118,12 @@ def grids_to_str(grids):
     bits = bits[:len(bits)-nspare]
     nbytes = int(len(bits) / 8)
     bytes = np.resize(np.array(bits), [nbytes, 8])
-    byte_to_str = lambda byte: int('0b' + ''.join(str(x) for x in byte.tolist()), 2)
-    byte_to_char = lambda byte: chr(byte_to_str(byte))
+    def byte_to_str(byte): return int('0b' + ''.join(str(x)
+                                                     for x in byte.tolist()), 2)
+
+    def byte_to_char(byte): return chr(byte_to_str(byte))
     return ''.join([byte_to_char(byte) for byte in bytes])
+
 
 def write_message_grids(outfile, grids):
     """
@@ -120,6 +132,7 @@ def write_message_grids(outfile, grids):
     with open(outfile, 'w') as f:
         f.write(grids_to_str(grids))
 
+
 def get_message_grid_from_grids(mgrids, conj_map):
     """
     mgrids is a list of numpy arrays, each a message grid of bits
@@ -127,12 +140,14 @@ def get_message_grid_from_grids(mgrids, conj_map):
     conjugates the ith mgrid if cgrids[i] == 1
     and returns altered mgrids
     """
-    
-    assert len(conj_map) >= len(mgrids), '{0} < {1}'.format(len(conj_map), len(mgrids))
+
+    assert len(conj_map) >= len(mgrids), '{0} < {1}'.format(
+        len(conj_map), len(mgrids))
     for i, mgrid in enumerate(mgrids):
         if conj_map[i]:
             mgrids[i] = conjugate(mgrid)
     return mgrids
+
 
 def get_n_message_grids(nbits_per_map, ngrids):
     """
@@ -144,16 +159,23 @@ def get_n_message_grids(nbits_per_map, ngrids):
     e.g. if x=34, and nbits_per_map=64 for each conj_map, then ngrids=35, x=34, and y=1 because 0 < 34 < 64
     e.g. if x=160, and nbits_per_map=60 for each conj_map, then ngrids=163, x=160, and y=3 because 2*60 < 160 < 3*60
     """
+
     x, y = ngrids-1, 1
-    is_valid = lambda x, y, ngrids, nbits_per_map: ngrids==x+y and sum(nbits_per_map[-(y-1):]) < x <= sum(nbits_per_map[-y:])
+    tempx,tempy=x,y
+    print("X is:",x)
+    def is_valid(x, y, ngrids, nbits_per_map): return ngrids == x + y and sum(nbits_per_map[-(y-1):]) < x <= sum(nbits_per_map[-y:])
     while not is_valid(x, y, ngrids, nbits_per_map) and x > 0:
-        x, y = x-1, y+1
-    if x <= 0 and ngrids == 2:
+        x,y = x-1, y+1
+    if x<y:
+        x,y=tempx,tempy
+    if x <= 0:
         # edge case
         return 1
+    print(x)
     assert x > 0
     assert y > 0
     return x
+
 
 def separate_conj_map_from_message(grids, alpha):
     """
@@ -166,14 +188,19 @@ def separate_conj_map_from_message(grids, alpha):
         log.critical('No message grids found')
         return [], [], []
 
-    get_nignored = lambda grid: len(get_conj_grid_prefix((grid.shape[0], grid.shape[1]), alpha))
-    get_nbits_per_map = lambda grid: grid.shape[0]*grid.shape[1] - get_nignored(grid)
+    def get_nignored(grid): return len(
+        get_conj_grid_prefix((grid.shape[0], grid.shape[1]), alpha))
+
+    def get_nbits_per_map(
+        grid): return grid.shape[0]*grid.shape[1] - get_nignored(grid) #get 1st & 2nd dim of grid with shape - length of grid
     nbits_per_map = [get_nbits_per_map(grid) for grid in grids]
 
     ngrids = len(grids)
     x = get_n_message_grids(nbits_per_map, ngrids)
-    log.critical('Found {0} message grids and {1} conjugation maps'.format(x, ngrids-x))
+    log.critical(
+        'Found {0} message grids and {1} conjugation maps'.format(x, ngrids-x))
     return grids[:x], grids[x:], nbits_per_map[x:]
+
 
 def get_conj_map(cgrids, nbits_per_map):
     """
@@ -181,13 +208,17 @@ def get_conj_map(cgrids, nbits_per_map):
     nbits_per_map is a list where the ith element stores the number of bits in the ith conj_map to keep
         since some percent of each conj_map grid will be junk bits added to keep complexity above alpha
     """
-    cgrids = [grid.reshape(-1).tolist()[-nbits_per_map[i]:] for i, grid in enumerate(cgrids)]
+    cgrids = [grid.reshape(-1).tolist()[-nbits_per_map[i]:]
+              for i, grid in enumerate(cgrids)]
     conj_map = np.hstack(cgrids).reshape(-1).tolist()
-    assert len(conj_map) == sum(nbits_per_map), '{0} != {1}'.format(len(conj_map), sum(nbits_per_map))
+    assert len(conj_map) == sum(nbits_per_map), '{0} != {1}'.format(
+        len(conj_map), sum(nbits_per_map))
     return conj_map
 
+
 def write_conjugated_message_grids(outfile, grids, alpha):
-    messages, conj_map_grids, nbits_per_map = separate_conj_map_from_message(grids, alpha)
+    messages, conj_map_grids, nbits_per_map = separate_conj_map_from_message(
+        grids, alpha)
     if len(conj_map_grids) == 0:
         return
     conj_map = get_conj_map(conj_map_grids, nbits_per_map)
